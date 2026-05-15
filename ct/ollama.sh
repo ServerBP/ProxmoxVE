@@ -27,7 +27,11 @@ function update_script() {
     msg_error "No Ollama Installation Found!"
     exit
   fi
-  RELEASE=$(curl -fsSL https://api.github.com/repos/ollama/ollama/releases/latest | grep "tag_name" | awk -F '"' '{print $4}')
+  RELEASE=$(curl -fsSL "https://api.github.com/repos/ollama/ollama/releases/latest" | sed -n 's/.*"tag_name" *: *"\([^"]*\)".*/\1/p' | head -1)
+  if [[ -z "${RELEASE}" || ! "${RELEASE}" =~ ^v[0-9] ]]; then
+    msg_error "Failed to determine latest Ollama version"
+    exit 1
+  fi
   if [[ ! -f /opt/Ollama_version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/Ollama_version.txt)" ]]; then
     if [[ ! -f /opt/Ollama_version.txt ]]; then
       touch /opt/Ollama_version.txt

@@ -62,7 +62,11 @@ $STD apt install -y --no-install-recommends intel-basekit-2024.1
 msg_ok "Installed Intel® oneAPI Base Toolkit"
 
 msg_info "Installing Ollama (Patience)"
-RELEASE=$(curl -fsSL https://api.github.com/repos/ollama/ollama/releases/latest | grep "tag_name" | awk -F '"' '{print $4}')
+RELEASE=$(curl -fsSL "https://api.github.com/repos/ollama/ollama/releases/latest" | sed -n 's/.*"tag_name" *: *"\([^"]*\)".*/\1/p' | head -1)
+if [[ -z "${RELEASE}" || ! "${RELEASE}" =~ ^v[0-9] ]]; then
+  msg_error "Failed to determine latest Ollama version"
+  exit 1
+fi
 OLLAMA_INSTALL_DIR="/usr/local/lib/ollama"
 BINDIR="/usr/local/bin"
 mkdir -p $OLLAMA_INSTALL_DIR
