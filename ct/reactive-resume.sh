@@ -49,11 +49,9 @@ function update_script() {
     $STD pnpm install --frozen-lockfile
     $STD pnpm run build
     msg_info "Deploying Nitro Runtime Externals"
-    RT_MODS="/opt/reactive-resume/packages/runtime-externals/node_modules"
-    WEB_MODS="/opt/reactive-resume/apps/web/node_modules"
-    for pkg in bcrypt sharp linkedom ioredis; do
-      [ -d "${RT_MODS}/${pkg}" ] && cp -rL "${RT_MODS}/${pkg}" "${WEB_MODS}/${pkg}"
-    done
+    $STD pnpm --filter=@reactive-resume/runtime-externals deploy --prod --legacy /tmp/rr-runtime
+    cp -r /tmp/rr-runtime/node_modules/. /opt/reactive-resume/apps/web/node_modules/
+    rm -rf /tmp/rr-runtime
     msg_ok "Deployed Nitro Runtime Externals"
     mv /opt/reactive-resume.env.bak /opt/reactive-resume/.env
     msg_ok "Updated Reactive Resume"
