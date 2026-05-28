@@ -31,16 +31,16 @@ function update_script() {
     exit
   fi
 
-  RELEASE=$(curl -fsSL "https://api.github.com/repos/revenz/FileFlows/releases/latest" | jq -r '.tag_name' | sed 's/^v//')
   CURRENT=$(cat /opt/fileflows/version 2>/dev/null | tr -d '[:space:]')
+  # Extract latest version from the Content-Disposition header of the download URL
+  RELEASE=$(curl -fsI "https://fileflows.com/downloads/zip" 2>/dev/null \
+    | grep -i "content-disposition" \
+    | grep -oP '[\d]+\.[\d]+\.[\d]+\.[\d]+' \
+    | head -1)
 
   if systemctl is-enabled fileflows-node &>/dev/null && ! systemctl is-enabled fileflows &>/dev/null; then
     # Node-only installation: no local server API available
-    if [[ -z "$RELEASE" ]]; then
-      msg_error "Failed to retrieve latest ${APP} version"
-      exit
-    fi
-    if [[ "$CURRENT" == "$RELEASE" ]]; then
+    if [[ -n "$RELEASE" && "$CURRENT" == "$RELEASE" ]]; then
       msg_ok "No update required. ${APP} Node is already at v${CURRENT}"
       exit
     fi
@@ -59,7 +59,7 @@ function update_script() {
     msg_info "Starting Service"
     systemctl start fileflows-node
     msg_ok "Started Service"
-    msg_ok "Updated successfully to v${RELEASE}!"
+    msg_ok "Updated successfully!"
   else
     # Server installation: use the local API
     update_available=$(curl -fsSL -X 'GET' "http://localhost:19200/api/status/update-available" -H 'accept: application/json' | jq .UpdateAvailable)
@@ -79,7 +79,7 @@ function update_script() {
       msg_info "Starting Service"
       systemctl start fileflows*
       msg_ok "Started Service"
-      msg_ok "Updated successfully to v${RELEASE}!"
+      msg_ok "Updated successfully!"
     else
       msg_ok "No update required. ${APP} is already at latest version"
     fi
